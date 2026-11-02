@@ -67,3 +67,24 @@ exports.seedPets = async (req, res) => {
     res.status(500).json({ success: false, message: 'Error al sembrar mascotas' });
   }
 };
+
+// RF-07: Registro de nuevas mascotas desde el módulo administrativo
+exports.createPet = async (req, res) => {
+  try {
+    const fields = ['name', 'species', 'approximateAge', 'description', 'imageUrl'];
+    const data = Object.fromEntries(fields.map((field) => [field, typeof req.body[field] === 'string' ? req.body[field].trim() : req.body[field]]));
+
+    if (!data.name || !data.species || !data.approximateAge || !data.description) {
+      return res.status(400).json({ success: false, message: 'Completa todos los campos obligatorios.' });
+    }
+    if (!['Perro', 'Gato'].includes(data.species)) {
+      return res.status(400).json({ success: false, message: 'La especie debe ser Perro o Gato.' });
+    }
+
+    const pet = await Pet.create({ ...data, imageUrl: data.imageUrl || null, status: 'Disponible' });
+    return res.status(201).json({ success: true, message: `${pet.name} fue agregado al catálogo.`, data: pet });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: 'No fue posible registrar la mascota.' });
+  }
+};

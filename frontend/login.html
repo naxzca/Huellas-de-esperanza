@@ -87,7 +87,9 @@
           messageDiv.innerText = isLogin ? '¡Inicio de sesión exitoso!' : '¡Usuario creado con éxito!';
           if (data.token) {
             localStorage.setItem('token', data.token);
-            setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            const destination = data.user?.role === 'Admin' ? 'admin.html' : 'index.html';
+            setTimeout(() => { window.location.href = destination; }, 1500);
           }
         } else {
           messageDiv.style.color = 'red';
