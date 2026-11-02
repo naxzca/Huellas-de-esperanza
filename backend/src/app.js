@@ -9,8 +9,10 @@ app.use(express.json());
 // Rutas principales
 const petRoutes = require('./routes/pet.routes');
 const authRoutes = require('./routes/auth.routes');
+const adoptionRoutes = require('./routes/adoption.routes');
 
 app.use('/api/pets', petRoutes);
+app.use('/api/adoptions', adoptionRoutes);
 app.use('/api/auth', authRoutes); // <- Nueva línea
 
 module.exports = app;
