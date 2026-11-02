@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Conoce las mascotas disponibles para adopción en Huellas de Esperanza.">
+  <title>Huellas de Esperanza | Adopta un amigo</title>
+  <style>
+    :root {
+      --green: #1f7a5a;
+      --green-dark: #14543e;
+      --green-soft: #e8f5ef;
+      --cream: #fffaf1;
+      --orange: #f59e55;
+      --ink: #21332d;
+      --muted: #65736e;
+      --white: #fff;
+      --shadow: 0 14px 38px rgba(31, 74, 59, .12);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--cream);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    button { font: inherit; }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 22px clamp(20px, 7vw, 100px) 72px;
+      color: var(--white);
+      background: linear-gradient(135deg, #14543e 0%, #258762 100%);
+    }
+    .hero::after {
+      content: "🐾";
+      position: absolute;
+      right: 5%;
+      bottom: -48px;
+      font-size: clamp(130px, 20vw, 250px);
+      opacity: .09;
+      transform: rotate(-16deg);
+    }
+    nav { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.1rem; }
+    .brand-mark { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 14px; background: rgba(255,255,255,.16); }
+    .logout { color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,.35); border-radius: 999px; padding: 9px 16px; }
+    .hero-copy { position: relative; z-index: 1; max-width: 720px; margin-top: 74px; }
+    .eyebrow { color: #bcebd8; font-size: .82rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+    h1 { max-width: 650px; margin: 12px 0 18px; font-size: clamp(2.4rem, 6vw, 4.7rem); line-height: .98; letter-spacing: -.045em; }
+    .hero p { max-width: 590px; margin: 0; color: #def4eb; font-size: 1.08rem; line-height: 1.65; }
+
+    main { width: min(1180px, calc(100% - 40px)); margin: -30px auto 70px; position: relative; z-index: 2; }
+    .toolbar {
+      display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap;
+      padding: 22px 24px; border-radius: 22px; background: var(--white); box-shadow: var(--shadow);
+    }
+    .toolbar h2 { margin: 0 0 4px; font-size: 1.35rem; }
+    #result-count { color: var(--muted); font-size: .9rem; }
+    .filters { display: flex; gap: 8px; padding: 5px; border-radius: 999px; background: var(--green-soft); }
+    .filter-btn { border: 0; border-radius: 999px; padding: 10px 17px; color: var(--green-dark); background: transparent; cursor: pointer; font-weight: 700; transition: .2s ease; }
+    .filter-btn:hover { background: rgba(255,255,255,.7); }
+    .filter-btn.active { color: var(--white); background: var(--green); box-shadow: 0 5px 12px rgba(31,122,90,.25); }
+
+    .pets-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; margin-top: 34px; }
+    .pet-card { overflow: hidden; background: var(--white); border-radius: 24px; box-shadow: 0 7px 25px rgba(31,74,59,.09); transition: transform .25s, box-shadow .25s; }
+    .pet-card:hover { transform: translateY(-6px); box-shadow: var(--shadow); }
+    .image-wrap { position: relative; height: 235px; overflow: hidden; background: #dfe9e4; }
+    .image-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s; }
+    .pet-card:hover img { transform: scale(1.04); }
+    .species-tag { position: absolute; top: 16px; left: 16px; padding: 7px 12px; border-radius: 999px; background: rgba(255,255,255,.92); color: var(--green-dark); font-size: .8rem; font-weight: 800; backdrop-filter: blur(5px); }
+    .card-body { padding: 22px; }
+    .card-heading { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+    .card-heading h3 { margin: 0; font-size: 1.55rem; }
+    .age { flex: none; margin-top: 4px; color: var(--orange); font-size: .85rem; font-weight: 800; }
+    .description { min-height: 48px; margin: 12px 0 20px; color: var(--muted); line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .details-btn { width: 100%; border: 0; border-radius: 13px; padding: 12px 16px; color: var(--white); background: var(--green); cursor: pointer; font-weight: 800; transition: background .2s; }
+    .details-btn:hover { background: var(--green-dark); }
+
+    .state { grid-column: 1 / -1; padding: 65px 20px; text-align: center; color: var(--muted); }
+    .spinner { width: 38px; height: 38px; margin: 0 auto 16px; border: 4px solid #d8e9e1; border-top-color: var(--green); border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    dialog { width: min(820px, calc(100% - 28px)); padding: 0; border: 0; border-radius: 26px; box-shadow: 0 28px 80px rgba(10,35,26,.35); overflow: hidden; }
+    dialog::backdrop { background: rgba(13,35,28,.68); backdrop-filter: blur(4px); }
+    .modal-content { display: grid; grid-template-columns: 1fr 1fr; min-height: 430px; }
+    .modal-image { width: 100%; height: 100%; min-height: 330px; object-fit: cover; background: #dfe9e4; }
+    .modal-info { position: relative; padding: 45px 38px 36px; }
+    .close-btn { position: absolute; top: 17px; right: 17px; width: 36px; height: 36px; border: 0; border-radius: 50%; color: var(--ink); background: var(--green-soft); cursor: pointer; font-size: 1.25rem; }
+    .modal-info h2 { margin: 8px 0 5px; font-size: 2.2rem; }
+    .modal-meta { color: var(--orange); font-weight: 800; }
+    .modal-description { margin: 24px 0; color: var(--muted); line-height: 1.7; }
+    .available { display: inline-flex; align-items: center; gap: 7px; padding: 9px 13px; border-radius: 10px; color: var(--green-dark); background: var(--green-soft); font-weight: 800; font-size: .85rem; }
+    .available::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #29a66f; }
+
+    footer { padding: 30px 20px; color: #d9eee6; text-align: center; background: var(--green-dark); }
+
+    @media (max-width: 650px) {
+      .hero { padding-bottom: 58px; }
+      .hero-copy { margin-top: 58px; }
+      .logout { display: none; }
+      main { width: min(100% - 24px, 1180px); }
+      .toolbar { align-items: stretch; }
+      .filters { width: 100%; }
+      .filter-btn { flex: 1; padding-inline: 8px; }
+      .modal-content { grid-template-columns: 1fr; }
+      .modal-image { height: 245px; min-height: 0; }
+      .modal-info { padding: 34px 26px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <nav>
+      <div class="brand"><span class="brand-mark">🐾</span> Huellas de Esperanza</div>
+      <a class="logout" href="login.html">Cerrar sesión</a>
+    </nav>
+    <div class="hero-copy">
+      <span class="eyebrow">Adopta, no compres</span>
+      <h1>Tu próximo mejor amigo te está esperando</h1>
+      <p>Conoce a nuestros peluditos rescatados y encuentra a ese compañero que llenará tu hogar de amor.</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="toolbar" aria-label="Filtros del catálogo">
+      <div>
+        <h2>Mascotas disponibles</h2>
+        <span id="result-count" aria-live="polite">Cargando catálogo...</span>
+      </div>
+      <div class="filters" role="group" aria-label="Filtrar por especie">
+        <button class="filter-btn active" data-species="" type="button">Todos</button>
+        <button class="filter-btn" data-species="Perro" type="button">🐶 Perros</button>
+        <button class="filter-btn" data-species="Gato" type="button">🐱 Gatos</button>
+      </div>
+    </section>
+
+    <section id="pets-grid" class="pets-grid" aria-live="polite">
+      <div class="state"><div class="spinner"></div>Buscando nuevos amigos...</div>
+    </section>
+  </main>
+
+  <dialog id="pet-modal" aria-labelledby="modal-name">
+    <div class="modal-content">
+      <img id="modal-image" class="modal-image" src="" alt="">
+      <div class="modal-info">
+        <button id="close-modal" class="close-btn" type="button" aria-label="Cerrar detalles">×</button>
+        <span id="modal-species" class="eyebrow"></span>
+        <h2 id="modal-name"></h2>
+        <div id="modal-age" class="modal-meta"></div>
+        <p id="modal-description" class="modal-description"></p>
+        <span id="modal-status" class="available"></span>
+      </div>
+    </div>
+  </dialog>
+
+  <footer>Hecho con amor para quienes dejan huella 🐾</footer>
+
+  <script>
+    const API_URL = 'http://localhost:4000/api/pets';
+    const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=800';
+    const grid = document.getElementById('pets-grid');
+    const count = document.getElementById('result-count');
+    const modal = document.getElementById('pet-modal');
+    let pets = [];
+
+    function escapeHtml(value = '') {
+      const element = document.createElement('div');
+      element.textContent = value;
+      return element.innerHTML;
+    }
+
+    function renderPets(items) {
+      count.textContent = `${items.length} ${items.length === 1 ? 'mascota encontrada' : 'mascotas encontradas'}`;
+      if (!items.length) {
+        grid.innerHTML = '<div class="state"><h3>No encontramos mascotas</h3><p>Prueba seleccionando otro filtro.</p></div>';
+        return;
+      }
+
+      grid.innerHTML = items.map((pet) => `
+        <article class="pet-card">
+          <div class="image-wrap">
+            <img src="${escapeHtml(pet.imageUrl || FALLBACK_IMAGE)}" alt="Foto de ${escapeHtml(pet.name)}" loading="lazy" onerror="this.src='${FALLBACK_IMAGE}'">
+            <span class="species-tag">${pet.species === 'Gato' ? '🐱' : '🐶'} ${escapeHtml(pet.species)}</span>
+          </div>
+          <div class="card-body">
+            <div class="card-heading">
+              <h3>${escapeHtml(pet.name)}</h3>
+              <span class="age">${escapeHtml(pet.approximateAge)}</span>
+            </div>
+            <p class="description">${escapeHtml(pet.description || 'Este peludito busca un hogar lleno de cariño.')}</p>
+            <button class="details-btn" type="button" data-id="${escapeHtml(pet.id)}">Ver detalles</button>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    function showDetails(pet) {
+      document.getElementById('modal-image').src = pet.imageUrl || FALLBACK_IMAGE;
+      document.getElementById('modal-image').alt = `Foto de ${pet.name}`;
+      document.getElementById('modal-name').textContent = pet.name;
+      document.getElementById('modal-species').textContent = pet.species;
+      document.getElementById('modal-age').textContent = `Edad aproximada: ${pet.approximateAge}`;
+      document.getElementById('modal-description').textContent = pet.description || 'Este peludito busca un hogar lleno de cariño.';
+      document.getElementById('modal-status').textContent = pet.status || 'Disponible';
+      modal.showModal();
+    }
+
+    async function loadPets(species = '') {
+      grid.innerHTML = '<div class="state"><div class="spinner"></div>Buscando nuevos amigos...</div>';
+      count.textContent = 'Cargando catálogo...';
+      try {
+        const url = species ? `${API_URL}?species=${encodeURIComponent(species)}` : API_URL;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('No se pudo consultar el catálogo');
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || 'Respuesta inválida');
+        pets = result.data;
+        renderPets(pets);
+      } catch (error) {
+        count.textContent = 'Catálogo no disponible';
+        grid.innerHTML = `<div class="state"><h3>No pudimos conectar con el servidor</h3><p>Asegúrate de que el backend esté activo en el puerto 4000.</p></div>`;
+      }
+    }
+
+    document.querySelectorAll('.filter-btn').forEach((button) => {
+      button.addEventListener('click', () => {
+        document.querySelector('.filter-btn.active').classList.remove('active');
+        button.classList.add('active');
+        loadPets(button.dataset.species);
+      });
+    });
+
+    grid.addEventListener('click', (event) => {
+      const button = event.target.closest('.details-btn');
+      if (!button) return;
+      const pet = pets.find((item) => String(item.id) === button.dataset.id);
+      if (pet) showDetails(pet);
+    });
+
+    document.getElementById('close-modal').addEventListener('click', () => modal.close());
+    modal.addEventListener('click', (event) => { if (event.target === modal) modal.close(); });
+    loadPets();
+  </script>
+</body>
+</html>
