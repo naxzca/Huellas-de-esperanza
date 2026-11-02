@@ -61,6 +61,21 @@ create table if not exists public.adoptions (
   updated_at timestamptz not null default now()
 );
 
+-- Las donaciones PSE de este proyecto son una simulación académica.
+create table if not exists public.donations (
+  id uuid primary key default gen_random_uuid(),
+  reference varchar(30) not null unique,
+  donor_name varchar(100) not null check (char_length(trim(donor_name)) >= 2),
+  donor_email extensions.citext not null,
+  document_type varchar(10) not null check (document_type in ('CC', 'CE', 'NIT', 'Pasaporte')),
+  document_number varchar(30) not null,
+  amount_cop integer not null check (amount_cop >= 5000),
+  bank varchar(80) not null,
+  status varchar(20) not null default 'Aprobada' check (status in ('Pendiente', 'Aprobada', 'Rechazada')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.forum_topics (
   id uuid primary key default gen_random_uuid(),
   author_id uuid not null references public.users(id) on delete restrict,
@@ -90,6 +105,8 @@ create index if not exists idx_pets_species_status on public.pets (species, stat
 create index if not exists idx_pets_last_activity on public.pets (last_activity_at);
 create index if not exists idx_adoptions_pet on public.adoptions (pet_id);
 create index if not exists idx_adoptions_status on public.adoptions (status, created_at desc);
+create index if not exists idx_donations_created on public.donations (created_at desc);
+create index if not exists idx_donations_status on public.donations (status);
 create index if not exists idx_forum_topics_activity on public.forum_topics (updated_at desc);
 create index if not exists idx_forum_replies_topic on public.forum_replies (topic_id, created_at);
 
@@ -120,6 +137,10 @@ create trigger adoptions_set_updated_at
 before update on public.adoptions
 for each row execute function public.set_updated_at();
 
+drop trigger if exists donations_set_updated_at on public.donations;
+create trigger donations_set_updated_at before update on public.donations
+for each row execute function public.set_updated_at();
+
 drop trigger if exists forum_topics_set_updated_at on public.forum_topics;
 create trigger forum_topics_set_updated_at before update on public.forum_topics
 for each row execute function public.set_updated_at();
@@ -144,12 +165,14 @@ for each row execute function public.touch_forum_topic();
 alter table public.users enable row level security;
 alter table public.pets enable row level security;
 alter table public.adoptions enable row level security;
+alter table public.donations enable row level security;
 alter table public.forum_topics enable row level security;
 alter table public.forum_replies enable row level security;
 
 revoke all on table public.users from anon, authenticated;
 revoke all on table public.pets from anon, authenticated;
 revoke all on table public.adoptions from anon, authenticated;
+revoke all on table public.donations from anon, authenticated;
 revoke all on table public.forum_topics from anon, authenticated;
 revoke all on table public.forum_replies from anon, authenticated;
 grant select on table public.pets to anon, authenticated;
