@@ -1,6 +1,7 @@
 export type Role = 'Adoptante' | 'Admin';
 
 export interface SessionUser { id: string; name: string; email: string; role: Role }
+export interface AdminUser extends SessionUser { active: boolean; created_at: string }
 
 export interface Pet {
   id: string;
