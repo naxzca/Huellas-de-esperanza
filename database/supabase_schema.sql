@@ -39,9 +39,29 @@ create table if not exists public.pets (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.adoptions (
+  id uuid primary key default gen_random_uuid(),
+  pet_id uuid not null references public.pets(id) on delete restrict,
+  pet_name varchar(60) not null,
+  full_name varchar(100) not null,
+  email extensions.citext not null,
+  phone varchar(30) not null,
+  city varchar(80) not null,
+  occupation varchar(100) not null,
+  housing_type varchar(50) not null,
+  pet_experience text not null,
+  adoption_reason text not null,
+  status varchar(20) not null default 'Pendiente'
+    check (status in ('Pendiente', 'En revisión', 'Aprobada', 'Rechazada')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create index if not exists idx_users_role on public.users (role);
 create index if not exists idx_pets_species_status on public.pets (species, status);
 create index if not exists idx_pets_last_activity on public.pets (last_activity_at);
+create index if not exists idx_adoptions_pet on public.adoptions (pet_id);
+create index if not exists idx_adoptions_status on public.adoptions (status, created_at desc);
 
 -- Mantiene updated_at sincronizado automáticamente.
 create or replace function public.set_updated_at()
@@ -65,12 +85,19 @@ create trigger pets_set_updated_at
 before update on public.pets
 for each row execute function public.set_updated_at();
 
+drop trigger if exists adoptions_set_updated_at on public.adoptions;
+create trigger adoptions_set_updated_at
+before update on public.adoptions
+for each row execute function public.set_updated_at();
+
 -- RLS: nunca se exponen usuarios ni escrituras administrativas al navegador.
 alter table public.users enable row level security;
 alter table public.pets enable row level security;
+alter table public.adoptions enable row level security;
 
 revoke all on table public.users from anon, authenticated;
 revoke all on table public.pets from anon, authenticated;
+revoke all on table public.adoptions from anon, authenticated;
 grant select on table public.pets to anon, authenticated;
 
 drop policy if exists "Catalogo publico de mascotas" on public.pets;

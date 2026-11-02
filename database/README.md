@@ -16,6 +16,16 @@ En **Project Settings > Database**, copia la cadena de conexión para el backend
 DATABASE_URL=postgresql://postgres.[PROJECT_REF]:CONTRASENA@HOST:6543/postgres
 ```
 
-El backend todavía usa SQLite hasta que se realice la migración de su configuración y modelos a PostgreSQL. El esquema ya queda preparado para ese siguiente paso.
+La aplicación Next.js utiliza la Data API de Supabase. Copia `.env.local.example` como `.env.local` y completa:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://TU_PROYECTO.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_REEMPLAZAR
+SUPABASE_SECRET_KEY=sb_secret_REEMPLAZAR
+JWT_SECRET=una_cadena_aleatoria_larga
+REFUGE_WHATSAPP_NUMBER=573001234567
+```
+
+`SUPABASE_SECRET_KEY` y `JWT_SECRET` son secretos exclusivos del servidor. No deben usar el prefijo `NEXT_PUBLIC_`.
 
 No publiques la contraseña de la base de datos, la secret key ni la antigua `service_role` key. Las claves administrativas deben existir solo en el servidor.
