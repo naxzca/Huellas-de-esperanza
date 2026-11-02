@@ -11,7 +11,10 @@ export async function GET() {
     return NextResponse.json({ success: true, data });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ success: false, message: 'No fue posible cargar el foro.' }, { status: 500 });
+    const message = (error as { code?: string })?.code === 'PGRST205'
+      ? 'El módulo de experiencias aún no está configurado en Supabase.'
+      : 'No fue posible cargar las experiencias.';
+    return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }
 
@@ -33,6 +36,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, data }, { status: 201 });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ success: false, message: 'No fue posible crear el tema.' }, { status: 500 });
+    const message = (error as { code?: string })?.code === 'PGRST205'
+      ? 'Primero debes crear las tablas del módulo de experiencias en Supabase.'
+      : 'No fue posible compartir tu experiencia.';
+    return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }
