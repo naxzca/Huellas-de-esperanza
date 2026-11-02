@@ -25,6 +25,10 @@ create table if not exists public.users (
   updated_at timestamptz not null default now()
 );
 
+-- Migración segura para proyectos que ya tenían creada la tabla users.
+alter table public.users
+  add column if not exists last_activity_at timestamptz not null default now();
+
 create table if not exists public.pets (
   id uuid primary key default gen_random_uuid(),
   name varchar(60) not null check (char_length(trim(name)) >= 1),
@@ -81,6 +85,7 @@ create table if not exists public.forum_replies (
 );
 
 create index if not exists idx_users_role on public.users (role);
+create index if not exists idx_users_activity on public.users (active, last_activity_at desc);
 create index if not exists idx_pets_species_status on public.pets (species, status);
 create index if not exists idx_pets_last_activity on public.pets (last_activity_at);
 create index if not exists idx_adoptions_pet on public.adoptions (pet_id);

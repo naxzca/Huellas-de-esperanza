@@ -13,6 +13,7 @@ export async function POST(request: Request) {
     if (!user || !user.active || !(await bcrypt.compare(password, user.password_hash))) {
       return NextResponse.json({ success: false, message: 'Credenciales incorrectas.' }, { status: 401 });
     }
+    await createServerSupabase().from('users').update({ last_activity_at: new Date().toISOString() }).eq('id', user.id);
     const sessionUser = { id: user.id, name: user.name, email: user.email, role: user.role };
     await setSession(sessionUser);
     return NextResponse.json({ success: true, user: sessionUser });
