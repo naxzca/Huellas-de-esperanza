@@ -7,6 +7,14 @@ begin;
 create extension if not exists citext with schema extensions;
 create extension if not exists pgcrypto with schema extensions;
 
+-- Bucket público para las fotografías del catálogo (máximo 5 MB por imagen).
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('pet-images', 'pet-images', true, 5242880, array['image/jpeg', 'image/png', 'image/webp'])
+on conflict (id) do update set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
+
 do $$
 begin
   create type public.user_role as enum ('Adoptante', 'Admin');
