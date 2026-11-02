@@ -22,6 +22,7 @@ Abre [http://localhost:3000](http://localhost:3000).
 - `/`: catálogo público.
 - `/login`: registro e inicio de sesión.
 - `/adopcion`: solicitud formal y envío por WhatsApp.
+- `/foro`: temas y conversaciones entre usuarios registrados.
 - `/admin`: alta de mascotas, protegida por rol `Admin`.
 
 Las claves `SUPABASE_SECRET_KEY` y `JWT_SECRET` solo se utilizan en el servidor y nunca deben publicarse.

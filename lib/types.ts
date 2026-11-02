@@ -12,3 +12,9 @@ export interface Pet {
   status: 'Disponible' | 'En proceso' | 'Adoptado';
   last_activity_at: string;
 }
+
+export interface ForumReply { id:string; author_name:string; content:string; created_at:string }
+export interface ForumTopic {
+  id:string; title:string; content:string; category:string; author_name:string; closed:boolean;
+  created_at:string; updated_at:string; forum_replies?:{count:number}[]; replies?:ForumReply[];
+}
