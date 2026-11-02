@@ -17,13 +17,14 @@ export default function AdminUsers({ currentUserId }: { currentUserId: string })
     }).catch((requestError) => { setMessage(requestError.message); setError(true); }).finally(() => setLoading(false));
   }, []);
 
-  async function promote(userId: string) {
+  async function changeRole(userId: string, role: 'Admin' | 'Adoptante') {
+    if (role === 'Adoptante' && !window.confirm('¿Confirmas que deseas quitarle los permisos de administrador a este usuario?')) return;
     setUpdating(userId); setMessage('');
     try {
-      const response = await fetch('/api/admin/users', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId }) });
+      const response = await fetch('/api/admin/users', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, role }) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.message);
-      setUsers((current) => current.map((user) => user.id === userId ? { ...user, role: 'Admin' } : user));
+      setUsers((current) => current.map((user) => user.id === userId ? { ...user, role } : user));
       setMessage(result.message); setError(false);
     } catch (requestError) {
       setMessage(requestError instanceof Error ? requestError.message : 'No fue posible actualizar el rol.'); setError(true);
@@ -37,7 +38,7 @@ export default function AdminUsers({ currentUserId }: { currentUserId: string })
       <table className="users-table">
         <thead><tr><th>Usuario</th><th>Correo</th><th>Registro</th><th>Rol</th><th>Acción</th></tr></thead>
         <tbody>{loading ? <tr><td colSpan={5} className="table-state">Cargando usuarios...</td></tr> : users.length === 0 ? <tr><td colSpan={5} className="table-state">No hay usuarios activos.</td></tr> : users.map((user) =>
-          <tr key={user.id}><td><div className="user-cell"><span className="user-avatar">{user.name.charAt(0).toUpperCase()}</span><strong>{user.name}{user.id === currentUserId && <small> Tú</small>}</strong></div></td><td>{user.email}</td><td>{new Date(user.created_at).toLocaleDateString('es-CO')}</td><td><span className={`role-badge ${user.role === 'Admin' ? 'admin' : ''}`}>{user.role}</span></td><td>{user.role === 'Admin' ? <span className="admin-check">✓ Administrador</span> : <button className="promote-button" disabled={updating === user.id} onClick={() => promote(user.id)}>{updating === user.id ? 'Actualizando...' : 'Hacer administrador'}</button>}</td></tr>)}
+          <tr key={user.id}><td><div className="user-cell"><span className="user-avatar">{user.name.charAt(0).toUpperCase()}</span><strong>{user.name}{user.id === currentUserId && <small> Tú</small>}</strong></div></td><td>{user.email}</td><td>{new Date(user.created_at).toLocaleDateString('es-CO')}</td><td><span className={`role-badge ${user.role === 'Admin' ? 'admin' : ''}`}>{user.role}</span></td><td>{user.id === currentUserId ? <span className="admin-check">✓ Tu cuenta</span> : user.role === 'Admin' ? <button className="demote-button" disabled={updating === user.id} onClick={() => changeRole(user.id, 'Adoptante')}>{updating === user.id ? 'Actualizando...' : 'Quitar administrador'}</button> : <button className="promote-button" disabled={updating === user.id} onClick={() => changeRole(user.id, 'Admin')}>{updating === user.id ? 'Actualizando...' : 'Hacer administrador'}</button>}</td></tr>)}
         </tbody>
       </table>
     </div>
