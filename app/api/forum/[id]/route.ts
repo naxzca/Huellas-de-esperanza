@@ -38,3 +38,23 @@ export async function POST(request: Request, context: RouteContext<'/api/forum/[
     return NextResponse.json({ success: false, message: 'No fue posible publicar la respuesta.' }, { status: 500 });
   }
 }
+
+export async function DELETE(_request: Request, context: RouteContext<'/api/forum/[id]'>) {
+  try {
+    const user = await getSession();
+    if (!user) return NextResponse.json({ success: false, message: 'Debes iniciar sesión.' }, { status: 401 });
+    const { id } = await context.params;
+    const db = createServerSupabase();
+    const { data: topic, error: findError } = await db.from('forum_topics').select('id,author_id').eq('id', id).maybeSingle();
+    if (findError) throw findError;
+    if (!topic) return NextResponse.json({ success: false, message: 'Tema no encontrado.' }, { status: 404 });
+    if (topic.author_id !== user.id) return NextResponse.json({ success: false, message: 'Solo el autor puede eliminar esta publicación.' }, { status: 403 });
+
+    const { error } = await db.from('forum_topics').delete().eq('id', id).eq('author_id', user.id);
+    if (error) throw error;
+    return NextResponse.json({ success: true, message: 'La experiencia fue eliminada.' });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ success: false, message: 'No fue posible eliminar la publicación.' }, { status: 500 });
+  }
+}

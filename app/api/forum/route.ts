@@ -5,7 +5,7 @@ import { getSession } from '@/lib/auth';
 export async function GET() {
   try {
     const { data, error } = await createServerSupabase().from('forum_topics')
-      .select('id,title,content,category,author_name,closed,created_at,updated_at,forum_replies(count)')
+      .select('id,title,content,category,author_id,author_name,closed,created_at,updated_at,forum_replies(count)')
       .order('updated_at', { ascending: false });
     if (error) throw error;
     return NextResponse.json({ success: true, data });

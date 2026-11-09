@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { ForumTopic } from '@/lib/types';
 
-export default function ForumHome({ signedIn }: { signedIn: boolean }) {
+export default function ForumHome({ signedIn, currentUserId }: { signedIn: boolean; currentUserId?: string }) {
   const [topics, setTopics] = useState<ForumTopic[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const [deletingId, setDeletingId] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -33,6 +34,19 @@ export default function ForumHome({ signedIn }: { signedIn: boolean }) {
     }
   }
 
+  async function deleteTopic(topic: ForumTopic) {
+    if (!window.confirm(`¿Eliminar definitivamente "${topic.title}"? También se eliminarán sus comentarios.`)) return;
+    setDeletingId(topic.id); setMessage('');
+    try {
+      const response = await fetch(`/api/forum/${topic.id}`, { method: 'DELETE' });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message);
+      setTopics((current) => current.filter((item) => item.id !== topic.id));
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'No fue posible eliminar la publicación.');
+    } finally { setDeletingId(''); }
+  }
+
   return <>
     <div className="forum-actions"><div><span className="eyebrow" style={{ color: 'var(--green)' }}>Historias que dejan huella</span><h1>Experiencias de la comunidad</h1><p className="muted">Conoce historias reales de adopción, rescate y convivencia con animales.</p></div></div>
     <section className="experience-module">
@@ -44,6 +58,7 @@ export default function ForumHome({ signedIn }: { signedIn: boolean }) {
       </form> : <div className="experience-login"><p>Inicia sesión para contarle tu historia a la comunidad.</p><Link className="button orange" href="/login">Iniciar sesión</Link></div>}
     </section>
     <h2 className="community-title">Historias compartidas</h2>
-    <section className="forum-list">{loading ? <div className="state">Cargando experiencias...</div> : topics.length === 0 ? <div className="state">Todavía no hay experiencias. ¡Comparte la primera!</div> : topics.map((topic) => <Link className="topic-card" href={`/foro/${topic.id}`} key={topic.id}><div><span className="topic-category">Experiencia</span><h2>{topic.title}</h2><p>{topic.content}</p><small>Compartida por {topic.author_name} · {new Date(topic.created_at).toLocaleDateString('es-CO')}</small></div><div className="reply-count"><strong>{topic.forum_replies?.[0]?.count || 0}</strong><span>comentarios</span></div></Link>)}</section>
+    {message && !busy && <div className="message error forum-delete-message">{message}</div>}
+    <section className="forum-list">{loading ? <div className="state">Cargando experiencias...</div> : topics.length === 0 ? <div className="state">Todavía no hay experiencias. ¡Comparte la primera!</div> : topics.map((topic) => <article className="topic-card" key={topic.id}><Link className="topic-card-link" href={`/foro/${topic.id}`}><div><span className="topic-category">Experiencia</span><h2>{topic.title}</h2><p>{topic.content}</p><small>Compartida por {topic.author_name} · {new Date(topic.created_at).toLocaleDateString('es-CO')}</small></div><div className="reply-count"><strong>{topic.forum_replies?.[0]?.count || 0}</strong><span>comentarios</span></div></Link>{topic.author_id === currentUserId && <button className="delete-topic-button" type="button" disabled={deletingId === topic.id} onClick={() => deleteTopic(topic)}>{deletingId === topic.id ? 'Eliminando...' : 'Eliminar'}</button>}</article>)}</section>
   </>;
 }
