@@ -45,7 +45,7 @@ export async function PATCH(request: Request) {
     const admin = await requireAdmin();
     if (!admin) return NextResponse.json({ success: false, message: 'Acceso exclusivo para administradores.' }, { status: 403 });
     const { userId, role } = await request.json();
-    if (!userId || typeof userId !== 'string' || !['Admin', 'Adoptante'].includes(role)) {
+    if (!userId || typeof userId !== 'string' || !['Admin', 'Adoptante', 'Redes'].includes(role)) {
       return NextResponse.json({ success: false, message: 'Usuario o rol inválido.' }, { status: 400 });
     }
     if (userId === admin.id && role !== 'Admin') {
@@ -59,7 +59,7 @@ export async function PATCH(request: Request) {
 
     const { data, error } = await db.from('users').update({ role }).eq('id', userId).select('id,name,email,role,active,created_at').single();
     if (error) throw error;
-    const message = role === 'Admin' ? `${data.name} ahora es administrador.` : `${data.name} volvió al rol Adoptante.`;
+    const message = role === 'Admin' ? `${data.name} ahora es administrador.` : role === 'Redes' ? `${data.name} ahora gestiona las redes sociales.` : `${data.name} volvió al rol Adoptante.`;
     return NextResponse.json({ success: true, message, data });
   } catch (error) {
     console.error(error);

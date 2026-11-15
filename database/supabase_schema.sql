@@ -22,6 +22,9 @@ exception
   when duplicate_object then null;
 end $$;
 
+-- Rol encargado exclusivamente de administrar los enlaces sociales.
+alter type public.user_role add value if not exists 'Redes';
+
 create table if not exists public.users (
   id uuid primary key default gen_random_uuid(),
   name varchar(100) not null check (char_length(trim(name)) >= 2),
@@ -31,6 +34,15 @@ create table if not exists public.users (
   active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
+);
+
+create table if not exists public.password_reset_tokens (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.users(id) on delete cascade,
+  token_hash varchar(64) not null unique,
+  expires_at timestamptz not null,
+  used_at timestamptz,
+  created_at timestamptz not null default now()
 );
 
 -- Migración segura para proyectos que ya tenían creada la tabla users.
@@ -84,6 +96,21 @@ create table if not exists public.donations (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.social_links (
+  platform varchar(20) primary key
+    check (platform in ('Instagram', 'Facebook', 'TikTok', 'YouTube', 'X')),
+  url text not null default '',
+  active boolean not null default false,
+  updated_by uuid references public.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  check (url = '' or url ~ '^https://')
+);
+
+insert into public.social_links (platform)
+values ('Instagram'), ('Facebook'), ('TikTok'), ('YouTube'), ('X')
+on conflict (platform) do nothing;
+
 create table if not exists public.forum_topics (
   id uuid primary key default gen_random_uuid(),
   author_id uuid not null references public.users(id) on delete restrict,
@@ -109,12 +136,15 @@ create table if not exists public.forum_replies (
 
 create index if not exists idx_users_role on public.users (role);
 create index if not exists idx_users_activity on public.users (active, last_activity_at desc);
+create index if not exists idx_password_reset_user on public.password_reset_tokens (user_id, created_at desc);
+create index if not exists idx_password_reset_expiry on public.password_reset_tokens (expires_at) where used_at is null;
 create index if not exists idx_pets_species_status on public.pets (species, status);
 create index if not exists idx_pets_last_activity on public.pets (last_activity_at);
 create index if not exists idx_adoptions_pet on public.adoptions (pet_id);
 create index if not exists idx_adoptions_status on public.adoptions (status, created_at desc);
 create index if not exists idx_donations_created on public.donations (created_at desc);
 create index if not exists idx_donations_status on public.donations (status);
+create index if not exists idx_social_links_active on public.social_links (active);
 create index if not exists idx_forum_topics_activity on public.forum_topics (updated_at desc);
 create index if not exists idx_forum_replies_topic on public.forum_replies (topic_id, created_at);
 
@@ -149,6 +179,10 @@ drop trigger if exists donations_set_updated_at on public.donations;
 create trigger donations_set_updated_at before update on public.donations
 for each row execute function public.set_updated_at();
 
+drop trigger if exists social_links_set_updated_at on public.social_links;
+create trigger social_links_set_updated_at before update on public.social_links
+for each row execute function public.set_updated_at();
+
 drop trigger if exists forum_topics_set_updated_at on public.forum_topics;
 create trigger forum_topics_set_updated_at before update on public.forum_topics
 for each row execute function public.set_updated_at();
@@ -171,19 +205,24 @@ for each row execute function public.touch_forum_topic();
 
 -- RLS: nunca se exponen usuarios ni escrituras administrativas al navegador.
 alter table public.users enable row level security;
+alter table public.password_reset_tokens enable row level security;
 alter table public.pets enable row level security;
 alter table public.adoptions enable row level security;
 alter table public.donations enable row level security;
+alter table public.social_links enable row level security;
 alter table public.forum_topics enable row level security;
 alter table public.forum_replies enable row level security;
 
 revoke all on table public.users from anon, authenticated;
+revoke all on table public.password_reset_tokens from anon, authenticated;
 revoke all on table public.pets from anon, authenticated;
 revoke all on table public.adoptions from anon, authenticated;
 revoke all on table public.donations from anon, authenticated;
+revoke all on table public.social_links from anon, authenticated;
 revoke all on table public.forum_topics from anon, authenticated;
 revoke all on table public.forum_replies from anon, authenticated;
 grant select on table public.pets to anon, authenticated;
+grant select on table public.social_links to anon, authenticated;
 
 drop policy if exists "Catalogo publico de mascotas" on public.pets;
 create policy "Catalogo publico de mascotas"
@@ -191,6 +230,13 @@ on public.pets
 for select
 to anon, authenticated
 using (status = 'Disponible');
+
+drop policy if exists "Redes sociales publicas" on public.social_links;
+create policy "Redes sociales publicas"
+on public.social_links
+for select
+to anon, authenticated
+using (active = true and url <> '');
 
 commit;
 

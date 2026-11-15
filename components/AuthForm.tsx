@@ -12,33 +12,21 @@ export default function AuthForm() {
   const router = useRouter();
 
   async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setBusy(true);
-    setMessage('');
+    event.preventDefault(); setBusy(true); setMessage('');
     const body = Object.fromEntries(new FormData(event.currentTarget));
+    if (!login && body.password !== body.passwordConfirmation) {
+      setMessage('Las contraseñas no coinciden.'); setError(true); setBusy(false); return;
+    }
     try {
-      const response = await fetch(`/api/auth/${login ? 'login' : 'register'}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
+      const response = await fetch(`/api/auth/${login ? 'login' : 'register'}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message);
-      if (login) {
-        router.replace('/');
-        router.refresh();
-      } else {
-        setLogin(true);
-        setMessage(data.message);
-        setError(false);
-      }
+      if (login) { router.replace('/'); router.refresh(); }
+      else { setLogin(true); setMessage(data.message); setError(false); }
     } catch (requestError) {
-      setMessage(requestError instanceof Error ? requestError.message : 'Ocurrió un error');
-      setError(true);
-    } finally {
-      setBusy(false);
-    }
+      setMessage(requestError instanceof Error ? requestError.message : 'Ocurrió un error'); setError(true);
+    } finally { setBusy(false); }
   }
 
-  return <main className="auth"><section className="auth-card"><Link className="brand" href="/" style={{color:'var(--dark)',justifyContent:'center'}}>🐾 Huellas de Esperanza</Link><h1>{login ? 'Iniciar sesión' : 'Crear cuenta'}</h1><form className="form-grid" onSubmit={submit}>{!login && <div className="field full"><label>Nombre completo</label><input name="name" required/></div>}<div className="field full"><label>Correo electrónico</label><input name="email" type="email" required/></div><div className="field full"><label>Contraseña</label><input name="password" type="password" minLength={8} required/></div>{message && <div className={`message ${error ? 'error' : 'success'}`}>{message}</div>}<button className="button full" disabled={busy}>{busy ? 'Procesando...' : login ? 'Ingresar' : 'Registrarme'}</button></form><div className="toggle">{login ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?'} <button onClick={() => {setLogin(!login);setMessage('')}}>{login ? 'Regístrate' : 'Inicia sesión'}</button></div></section></main>;
+  return <main className="auth"><section className="auth-card"><Link className="brand" href="/" style={{color:'var(--dark)',justifyContent:'center'}}>🐾 Huellas de Esperanza</Link><h1>{login?'Iniciar sesión':'Crear cuenta'}</h1><form className="form-grid" onSubmit={submit}>{!login&&<div className="field full"><label>Nombre completo</label><input name="name" required/></div>}<div className="field full"><label>Correo electrónico</label><input name="email" type="email" autoComplete="email" required/></div><div className="field full"><label>Contraseña</label><input name="password" type="password" minLength={8} autoComplete={login?'current-password':'new-password'} required/></div>{!login&&<div className="field full"><label>Confirmar contraseña</label><input name="passwordConfirmation" type="password" minLength={8} autoComplete="new-password" required/></div>}{login&&<div className="forgot-link full"><Link href="/olvide-contrasena">¿Olvidaste tu contraseña?</Link></div>}{message&&<div className={`message ${error?'error':'success'}`}>{message}</div>}<button className="button full" disabled={busy}>{busy?'Procesando...':login?'Ingresar':'Registrarme'}</button></form><div className="toggle">{login?'¿No tienes cuenta?':'¿Ya tienes cuenta?'} <button onClick={()=>{setLogin(!login);setMessage('');setError(false)}}>{login?'Regístrate':'Inicia sesión'}</button></div></section></main>;
 }

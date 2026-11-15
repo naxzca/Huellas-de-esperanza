@@ -4,9 +4,12 @@ import { createServerSupabase } from '@/lib/supabase';
 
 export async function POST(request: Request) {
   try {
-    const { name, email, password } = await request.json();
+    const { name, email, password, passwordConfirmation } = await request.json();
     if (!name?.trim() || !email?.trim() || typeof password !== 'string' || password.length < 8) {
       return NextResponse.json({ success: false, message: 'Completa los datos y usa una contraseña de al menos 8 caracteres.' }, { status: 400 });
+    }
+    if (password !== passwordConfirmation) {
+      return NextResponse.json({ success: false, message: 'Las contraseñas no coinciden.' }, { status: 400 });
     }
     const supabase = createServerSupabase();
     const normalizedEmail = email.trim().toLowerCase();

@@ -1,7 +1,8 @@
-export type Role = 'Adoptante' | 'Admin';
+export type Role = 'Adoptante' | 'Admin' | 'Redes';
 
 export interface SessionUser { id: string; name: string; email: string; role: Role }
 export interface AdminUser extends SessionUser { active: boolean; created_at: string; last_activity_at: string }
+export interface SocialLink { platform: 'Instagram' | 'Facebook' | 'TikTok' | 'YouTube' | 'X'; url: string; active: boolean; updated_at: string }
 
 export interface Pet {
   id: string;
